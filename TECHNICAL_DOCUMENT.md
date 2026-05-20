@@ -36,15 +36,6 @@ Yahoo Finance shut down its official API in 2017. There are a few approaches:
 
 **Risk acknowledged**: Yahoo can change internal endpoints without notice. Mitigation: cache responses, fail gracefully, and the library maintainers typically patch within days of breakage.
 
-### Google Finance
-Google Finance has no accessible API — not official, not unofficial. Web scraping Google Finance is also unreliable due to aggressive bot protection (Captcha, IP rotation).
-
-**My solution**: Yahoo Finance provides equivalent fundamental data:
-- P/E Ratio → `quote.trailingPE` (same as P/E TTM)
-- Latest Earnings (EPS) → `quote.epsTrailingTwelveMonths`
-
-These are identical data points to what Google Finance shows. If a live fetch fails, the dashboard falls back to the values from the Excel file.
-
 ---
 
 ## 3. Rate Limiting Strategy
@@ -52,12 +43,9 @@ These are identical data points to what Google Finance shows. If a live fetch fa
 Yahoo's informal limits are roughly 10–20 requests/second before they start returning 429s. With 26 stocks in the portfolio:
 
 **Approach**:
-1. **Batch size of 5**: Fetch 5 symbols concurrently per round
-2. **300ms inter-batch delay**: A 300ms gap between each batch of 5
-3. **30-second in-memory cache**: Each symbol result is cached for 30 seconds. A 15s poll cycle means every other poll hits the cache, halving real API calls.
-4. **Shorter failure cache**: Failed fetches are re-cached for only 5 seconds, allowing faster retry.
-
-**Total fetch time estimate**: 26 stocks / 5 per batch = 6 batches × ~300ms = ~1.8s worst case (network not included).
+1. **Batch size of 50**: Current implementation chunks at 50, but uses concurrent processing for fresh data.
+2. **30-second in-memory cache**: Each symbol result is cached for 30 seconds. A 15s poll cycle means every other poll hits the cache, halving real API calls.
+3. **Shorter failure cache**: Failed fetches are re-cached for only 5 seconds, allowing faster retry.
 
 ---
 
@@ -75,12 +63,9 @@ Browser                          Server
    │◄─── JSON                       │
 ```
 
-- `usePortfolio` hook uses `setInterval` to poll every 15 seconds
-- A visual countdown (15 → 0) keeps users informed
-- Manual "Refresh" button resets the countdown and triggers an immediate fetch
-- `isRefreshing` state shows a spinner on the button during the fetch
-
-**Why polling over WebSockets**: WebSockets add server complexity (persistent connections, reconnection logic) and don't meaningfully improve UX when the underlying data source (Yahoo Finance) is itself polled — not pushed. Polling every 15s is appropriate for delayed exchange data.
+- `usePortfolio` hook uses `setInterval` to poll every 15 seconds.
+- A visual countdown (15 → 0) keeps users informed.
+- Manual "Refresh" button resets the countdown and triggers an immediate fetch.
 
 ---
 
@@ -89,14 +74,10 @@ Browser                          Server
 The portfolio data has two distinct layers:
 
 **Static layer** (from Excel, never changes at runtime):
-- Purchase price, quantity, sector, NSE code, Excel fundamentals
+- Purchase price, quantity, sector, NSE code, Excel fundamentals.
 
 **Dynamic layer** (from Yahoo Finance, updates every 15s):
-- CMP, present value, gain/loss, live P/E, live EPS
-
-I modeled this as a single `StockHolding` interface where dynamic fields are `number | null`. Null means "not yet fetched" — the UI handles this by showing a pulsing placeholder rather than 0 or NaN.
-
-This avoids the common bug of showing ₹0 gain/loss for stocks that haven't loaded yet.
+- CMP, present value, gain/loss, live P/E, live EPS, Sparklines, News.
 
 ---
 
@@ -110,58 +91,68 @@ DashboardPage (client, polling)
 ├── GainLossChart (recharts horizontal bar — per-stock P&L)
 └── PortfolioTable (@tanstack/react-table)
     ├── [SectorHeader × 6] (collapsible, sector P&L summary)
-    └── [StockRow × N] (individual holdings)
+    └── [StockRow × N] (individual holdings + News Tooltip + Sparkline)
 ```
-
-Key decisions:
-- **`@tanstack/react-table`** for the table: Provides headless sorting without opinionated rendering, letting us slot in custom sector header rows between data rows.
-- **Recharts** for charts: Declarative, SSR-compatible, lightweight.
-- **Sector collapsibility**: Each sector starts expanded. Toggle state is local to `PortfolioTable`. Collapse is useful when the user wants to focus on a specific sector.
 
 ---
 
 ## 7. Performance Optimizations
 
-1. **`useMemo` for sorted sectors**: Re-sorting 26 items only when `sorting` state changes.
-2. **Server-side data merge**: `mergeWithLivePrices` runs on the server, not in the browser, reducing JS bundle work.
-3. **`force-dynamic` on API route**: Prevents Next.js from caching the API response at the CDN layer, ensuring every poll gets fresh data.
-4. **Error isolation**: A failed Yahoo fetch for one symbol doesn't block the entire response — other symbols still return.
+1. **`useMemo` for filtering and sorting**: Ensuring high performance even with large stock lists.
+2. **Batch Data Fetching**: Using `Promise.all` for concurrent historical and news fetching on the server.
+3. **Memoized Table**: Headless table logic ensures only changed rows re-render.
 
 ---
 
 ## 8. Security Considerations
 
-- **No API keys exposed**: `yahoo-finance2` doesn't require API keys. If a service were added that required keys (e.g. a paid data provider), they would live in `.env.local` and be accessed only server-side.
-- **No sensitive data client-side**: The backend merges data before sending to the browser. The client never directly calls Yahoo Finance.
-- **Input validation**: The API route doesn't accept any user input — it uses a hardcoded symbol list from `portfolioData.ts`.
+- **Server-Side Execution**: All API interactions with Yahoo Finance happen on the server, hiding logic and protecting against CORS issues.
+- **Husky & Lint-staged**: Pre-commit hooks ensure that only code following strict ESLint rules and TypeScript types is committed.
 
 ---
 
-## 9. What I Would Add With More Time
+## 9. Future Roadmap & Scaling
 
-1. **Redis cache**: Replace in-memory cache with Redis for multi-instance deployments (Vercel, etc.)
-2. **WebSocket for real price streaming**: Integrate a paid provider like Zerodha Kite WebSocket or NSE's official feed for true real-time prices
-3. **Historical P&L chart**: A time-series chart showing portfolio value over time, stored in a lightweight database (SQLite or Postgres)
-4. **Alert system**: Email/SMS alerts when a stock's gain/loss crosses a threshold
-5. **Authentication**: Multi-user support with individual portfolios
-6. **Google Finance scraping**: A Playwright-based headless browser approach could work but adds significant infrastructure overhead — not worth it when Yahoo Finance provides the same data
+### 1. Redis for Distributed Caching
+Currently, the application uses an in-memory `Map` for caching prices. While fast, this cache is lost on every server restart and isn't shared across multiple server instances (e.g., in a Vercel/Serverless environment).
+- **Implementation**: Migrate to **Upstash Redis** or standard Redis.
+- **Benefit**: Persistence and shared state across all server instances.
+
+### 2. Official Market Data Integration (Zerodha Kite)
+To move beyond the 15-minute delay of unofficial Yahoo data, the next step is integrating an official Indian exchange broker API like **Kite Connect**.
+- **Implementation**: Replace `yahooFetcher.ts` logic with Kite's REST API for CMP and fundamental data.
+- **Benefit**: NSE/BSE tick-by-tick accuracy and legal data reliability.
+
+### 3. WebSockets for True Real-time Streaming
+Polling every 15 seconds is efficient but not "true" real-time.
+- **Implementation**: Implement a WebSocket server (using Socket.io or Next.js custom server) that pipes a live stream from a data provider directly to the browser.
+- **Benefit**: Zero-latency price updates without manual or timed refreshes.
+
+### 4. Historical P&L & Analytics
+- **Implementation**: A time-series chart showing portfolio value over time, stored in a lightweight database (PostgreSQL/Supabase).
+- **Metric**: Adding **XIRR** and **CAGR** calculations for professional performance tracking.
 
 ---
 
 ## 10. Lessons Learned
 
-The most important non-obvious insight: **always read unofficial library source code before committing to it**. I verified `yahoo-finance2` before using it — it targets Yahoo's `query2.finance.yahoo.com` internal endpoint and has proper TypeScript types. Some alternatives (like `yahoo-finance` v1) are abandoned and broken.
+The most important non-obvious insight: **always read unofficial library source code before committing to it**. I verified `yahoo-finance2` before using it — it targets Yahoo's internal endpoints and has proper TypeScript types.
 
-The second insight: **build for failure from day one**. The `null` data model + graceful UI degradation took 20% more upfront time but meant the dashboard always renders something useful, even when Yahoo is flaky.
- fetch the last 7 days of closing prices in a single call.
-- **Frontend**: A custom lightweight component using Recharts `<LineChart />` with all axes hidden, color-coded by the stock's overall P&L status.
+The second insight: **build for failure from day one**. The `null` data model + graceful UI degradation ensures the dashboard always renders something useful, even when individual symbols fail to load.
+
+---
+
+## 11. Advanced Features Implementation
+
+### 7-Day Sparklines
+To provide visual momentum indicators without overloading the API:
+- **Backend**: Uses `yf.chart(symbol, { interval: '1d' })` to fetch the last 7 days of closing prices.
+- **Frontend**: A custom component using Recharts `<LineChart />` with hidden axes, color-coded by P&L.
 
 ### Live News Integration
-Context is key for investors. I added a hover-activated news feed:
-- **Data Source**: Uses `yf.search(symbol)` to retrieve the top 3 most relevant headlines and publishers.
-- **UI/UX**: Headlines are tucked away in a hover tooltip to keep the main table clean and focused on numbers.
+- **Data Source**: Uses `yf.search(symbol)` to retrieve headlines.
+- **UI/UX**: Headlines are displayed in a hover-activated tooltip to maintain a clean layout.
 
 ### Real-time Search
-With 26+ holdings, finding a specific stock quickly is essential:
-- **Implementation**: A client-side filter that matches against both company names and NSE/BSE symbols.
-- **Performance**: Integrated directly with `useMemo` and `@tanstack/react-table` to ensure sorting and sector grouping remain consistent while filtering.
+- **Implementation**: A client-side filter matching company names and symbols.
+- **Performance**: Integrated with `useMemo` to keep table sorting and sector grouping consistent during filtering.
