@@ -69,10 +69,11 @@ async function fetchBatch(symbols: string[]): Promise<LivePriceResult[]> {
           interval: "1d",
         });
         sparkline = chart.quotes
-          .map((quote) => quote.close)
-          .filter((v): v is number => v !== null);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((quote: any) => quote.close)
+          .filter((v: number | null | undefined): v is number => v !== null && v !== undefined);
         
-        if (sparkline.length > 0) {
+        if (sparkline && sparkline.length > 0) {
           console.log(`[YahooFetcher] Success: ${symbol} sparkline points: ${sparkline.length}`);
         }
       } catch (e: unknown) {
