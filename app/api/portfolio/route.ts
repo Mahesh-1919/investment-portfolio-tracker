@@ -29,10 +29,7 @@ export async function GET(request: NextRequest) {
           liveDataReceived: successCount,
           errors: errorCount,
           timestamp: new Date().toISOString(),
-          note:
-            errorCount > 0
-              ? `${errorCount} symbol(s) failed to fetch live data. Showing last known values.`
-              : null,
+          note: null,
         },
       },
     });

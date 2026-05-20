@@ -38,10 +38,11 @@ async function fetchBatch(symbols: string[]): Promise<LivePriceResult[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quotes: any[] = await yf.quote(uncached);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Fetch historical data and news for sparklines/headlines
+    // We'll only do this for fresh results to save time
     const quoteMap = new Map<string, any>(quotes.map((q: any) => [q.symbol, q]));
 
-    freshResults = uncached.map((symbol) => {
+    const freshResultsPromises = uncached.map(async (symbol) => {
       const q = quoteMap.get(symbol);
 
       if (!q) {
@@ -56,15 +57,50 @@ async function fetchBatch(symbols: string[]): Promise<LivePriceResult[]> {
         return result;
       }
 
+      // Fetch sparkline (last 7 days of close prices)
+      let sparkline: number[] | undefined;
+      try {
+        const chart = await yf.chart(symbol, {
+          period1: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // last 7 days
+          interval: "1d",
+        });
+        sparkline = chart.quotes
+          .map((q) => q.close)
+          .filter((v): v is number => v !== null);
+        
+        if (sparkline.length > 0) {
+          console.log(`[YahooFetcher] Success: ${symbol} sparkline points: ${sparkline.length}`);
+        }
+      } catch (e) {
+        console.warn(`[YahooFetcher] Failed sparkline for ${symbol}:`, (e as any).message);
+      }
+
+      // Fetch news (limit to first 3 items)
+      let news: { title: string; link: string; publisher: string }[] | undefined;
+      try {
+        const search = await yf.search(symbol, { newsCount: 3 });
+        news = search.news?.map((n: any) => ({
+          title: n.title,
+          link: n.link,
+          publisher: n.publisher,
+        }));
+      } catch (e) {
+        console.warn(`[YahooFetcher] Failed news for ${symbol}`);
+      }
+
       const result: LivePriceResult = {
         symbol,
         cmp: q.regularMarketPrice ?? null,
         peRatio: q.trailingPE ?? null,
         latestEarnings: q.epsTrailingTwelveMonths ?? null,
+        sparkline,
+        news,
       };
       setCache(symbol, result);
       return result;
     });
+
+    freshResults = await Promise.all(freshResultsPromises);
 
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : "Batch fetch failed";

@@ -3,7 +3,8 @@
 import { StockHolding } from "@/types/portfolio";
 import { formatCurrency, formatPct, formatNumber } from "@/lib/portfolioUtils";
 import clsx from "clsx";
-import { AlertTriangle, Star } from "lucide-react";
+import { Star, Newspaper, ExternalLink } from "lucide-react";
+import { Sparkline } from "./Sparkline";
 
 interface StockRowProps {
   holding: StockHolding;
@@ -13,41 +14,71 @@ interface StockRowProps {
 export function StockRow({ holding, rank }: StockRowProps) {
   const isPositive = (holding.gainLoss ?? 0) >= 0;
   const hasLiveData = holding.cmp !== null;
-  const shouldExit = holding.exitFlag?.toLowerCase().includes("exit");
 
   return (
     <tr
-      className={clsx(
-        "border-b border-slate-800/60 transition-colors hover:bg-slate-800/40 group",
-        shouldExit && "opacity-75"
-      )}
+      className="border-b border-slate-800/60 transition-colors hover:bg-slate-800/40 group"
     >
       <td className="px-3 py-2.5 text-center text-xs text-slate-600 tabular-nums">
         {rank}
       </td>
 
       <td className="px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-medium text-slate-200 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-medium text-slate-200 text-sm truncate max-w-[120px]">
                 {holding.particulars}
               </span>
-              {holding.isCoreHolding && (
-                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-              )}
-              {shouldExit && (
-                <span className="text-xs px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-medium">
-                  Exit
-                </span>
-              )}
             </div>
             <span className="text-xs text-slate-500 font-mono">
               {holding.nseCode}
             </span>
           </div>
+
+          {/* Sparkline & News */}
+          <div className="flex items-center gap-3 shrink-0">
+            {holding.sparkline && holding.sparkline.length > 0 ? (
+              <div className="opacity-60 group-hover:opacity-100 transition-opacity w-16 h-8">
+                <Sparkline
+                  data={holding.sparkline}
+                  color={isPositive ? "#34d399" : "#f87171"}
+                />
+              </div>
+            ) : (
+              <div className="w-16 h-8 flex items-center justify-center">
+                <div className="w-1 h-1 rounded-full bg-slate-800" />
+              </div>
+            )}
+            {holding.news && holding.news.length > 0 && (
+              <div className="relative group/news shrink-0">
+                <Newspaper className="w-3.5 h-3.5 text-slate-500 hover:text-sky-400 cursor-help transition-colors" />
+                <div className="absolute left-0 bottom-full mb-2 w-64 p-3 rounded-lg bg-slate-800 border border-slate-700 shadow-2xl opacity-0 invisible group-hover/news:opacity-100 group-hover/news:visible transition-all z-50 pointer-events-none group-hover/news:pointer-events-auto">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-2">Latest News</p>
+                  <div className="space-y-2">
+                    {holding.news.map((item, i) => (
+                      <a
+                        key={i}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-xs text-slate-300 hover:text-sky-400 transition-colors border-b border-slate-700/50 pb-2 last:border-0 last:pb-0"
+                      >
+                        <p className="line-clamp-2 leading-snug">{item.title}</p>
+                        <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
+                          <span>{item.publisher}</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </td>
+
 
       <td className="px-4 py-2.5 text-right text-sm tabular-nums text-slate-400 font-mono">
         {formatCurrency(holding.purchasePrice)}

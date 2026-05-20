@@ -30,9 +30,9 @@ export interface StockHolding {
   pat: number | null;
   debtToEquity: number | null;
   bookValue: number | null;
-  isCoreHolding: boolean;      // Stage-2 "Yes" column
-  exitFlag?: string;           // "Must exit", "Exit" etc.
   lastUpdated?: string;
+  sparkline?: number[];        // Historical close prices for small chart
+  news?: { title: string; link: string; publisher: string }[];
 }
 
 export interface SectorSummary {
@@ -57,5 +57,7 @@ export interface LivePriceResult {
   cmp: number | null;
   peRatio: number | null;
   latestEarnings: number | null;
+  sparkline?: number[];
+  news?: { title: string; link: string; publisher: string }[];
   error?: string;
 }

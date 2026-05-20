@@ -12,7 +12,7 @@ import {
 import { SectorSummary, StockHolding } from "@/types/portfolio";
 import { SectorHeader } from "./SectorHeader";
 import { StockRow } from "./StockRow";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
 import clsx from "clsx";
 
 interface PortfolioTableProps {
@@ -21,6 +21,7 @@ interface PortfolioTableProps {
 
 const COL_SPAN = 11;
 
+// Column definitions for react-table (used for header sorting only)
 const columns: ColumnDef<StockHolding>[] = [
   { accessorKey: "id", header: "#", size: 40 },
   { accessorKey: "particulars", header: "Stock" },
@@ -41,6 +42,7 @@ export function PortfolioTable({ sectors }: PortfolioTableProps) {
     new Set(sectors.map((s) => s.sector))
   );
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [search, setSearch] = useState("");
 
   const toggleSector = (sector: string) => {
     setOpenSectors((prev) => {
@@ -54,10 +56,25 @@ export function PortfolioTable({ sectors }: PortfolioTableProps) {
     });
   };
 
-  // Flatten all holdings for sort state management via react-table
+  // Filter and flatten all holdings for sort state management via react-table
+  const filteredSectors = useMemo(() => {
+    if (!search) return sectors;
+    const term = search.toLowerCase();
+    return sectors
+      .map((s) => ({
+        ...s,
+        holdings: s.holdings.filter(
+          (h) =>
+            h.particulars.toLowerCase().includes(term) ||
+            h.nseCode.toLowerCase().includes(term)
+        ),
+      }))
+      .filter((s) => s.holdings.length > 0);
+  }, [sectors, search]);
+
   const allHoldings = useMemo(
-    () => sectors.flatMap((s) => s.holdings),
-    [sectors]
+    () => filteredSectors.flatMap((s) => s.holdings),
+    [filteredSectors]
   );
 
   const table = useReactTable({
@@ -82,9 +99,9 @@ export function PortfolioTable({ sectors }: PortfolioTableProps) {
 
   // Sort holdings within each sector according to table sort state
   const sortedSectors = useMemo(() => {
-    if (sorting.length === 0) return sectors;
+    if (sorting.length === 0) return filteredSectors;
 
-    return sectors.map((sector) => ({
+    return filteredSectors.map((sector) => ({
       ...sector,
       holdings: [...sector.holdings].sort((a, b) => {
         for (const sort of sorting) {
@@ -100,90 +117,105 @@ export function PortfolioTable({ sectors }: PortfolioTableProps) {
         return 0;
       }),
     }));
-  }, [sectors, sorting]);
+  }, [filteredSectors, sorting]);
 
   return (
-    <div className="rounded-xl border border-slate-700/50 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          {/* Sticky header */}
-          <thead className="sticky top-0 z-10">
-            <tr className="bg-slate-900 border-b border-slate-700/50">
-              {table.getHeaderGroups()[0].headers.map((header) => {
-                const isSorted = header.column.getIsSorted();
+    <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <input
+          type="text"
+          placeholder="Search stocks by name or symbol..."
+          className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition-all"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      <div className="rounded-xl border border-slate-700/50 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            {/* Sticky header */}
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-slate-900 border-b border-slate-700/50">
+                {table.getHeaderGroups()[0].headers.map((header) => {
+                  const isSorted = header.column.getIsSorted();
+                  return (
+                    <th
+                      key={header.id}
+                      className={clsx(
+                        "px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500",
+                        "whitespace-nowrap select-none",
+                        header.id === "id" ? "text-center w-10" : "text-right",
+                        header.id === "particulars" && "text-left",
+                        "cursor-pointer hover:text-slate-300 transition-colors"
+                      )}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <span className="flex items-center gap-1 justify-end">
+                        {header.id === "particulars" && (
+                          <span className="justify-start">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </span>
+                        )}
+                        {header.id !== "particulars" && (
+                          <>
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </>
+                        )}
+                        {isSorted === "asc" ? (
+                          <ArrowUp className="w-3 h-3 text-sky-400" />
+                        ) : isSorted === "desc" ? (
+                          <ArrowDown className="w-3 h-3 text-sky-400" />
+                        ) : (
+                          <ArrowUpDown className="w-3 h-3 opacity-30" />
+                        )}
+                      </span>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+
+            <tbody className="bg-slate-900/50">
+              {sortedSectors.map((sector) => {
+                const isOpen = openSectors.has(sector.sector);
                 return (
-                  <th
-                    key={header.id}
-                    className={clsx(
-                      "px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500",
-                      "whitespace-nowrap select-none",
-                      header.id === "id" ? "text-center w-10" : "text-right",
-                      header.id === "particulars" && "text-left",
-                      "cursor-pointer hover:text-slate-300 transition-colors"
-                    )}
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    <span className="flex items-center gap-1 justify-end">
-                      {header.id === "particulars" && (
-                        <span className="justify-start">
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </span>
-                      )}
-                      {header.id !== "particulars" && (
-                        <>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </>
-                      )}
-                      {isSorted === "asc" ? (
-                        <ArrowUp className="w-3 h-3 text-sky-400" />
-                      ) : isSorted === "desc" ? (
-                        <ArrowDown className="w-3 h-3 text-sky-400" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
-                    </span>
-                  </th>
+                  <React.Fragment key={`sector-${sector.sector}`}>
+                    <SectorHeader
+                      sector={sector}
+                      isOpen={isOpen}
+                      onToggle={() => toggleSector(sector.sector)}
+                      colSpan={COL_SPAN}
+                    />
+                    {isOpen &&
+                      sector.holdings.map((holding, idx) => (
+                        <StockRow
+                          key={holding.id}
+                          holding={holding}
+                          rank={
+                            sorting.length > 0
+                              ? (sortedRankMap.get(holding.id) ?? idx + 1)
+                              : idx + 1
+                          }
+                        />
+                      ))}
+                  </React.Fragment>
                 );
               })}
-            </tr>
-          </thead>
-
-          <tbody className="bg-slate-900/50">
-            {sortedSectors.map((sector) => {
-              const isOpen = openSectors.has(sector.sector);
-              return (
-                  <React.Fragment key={`sector-${sector.sector}`}>
-                  <SectorHeader
-                    key={`sector-${sector.sector}`}
-                    sector={sector}
-                    isOpen={isOpen}
-                    onToggle={() => toggleSector(sector.sector)}
-                    colSpan={COL_SPAN}
-                  />
-                  {isOpen &&
-                    sector.holdings.map((holding, idx) => (
-                      <StockRow
-                        key={holding.id}
-                        holding={holding}
-                        rank={
-                          sorting.length > 0
-                            ? (sortedRankMap.get(holding.id) ?? idx + 1)
-                            : idx + 1
-                        }
-                      />
-                    ))}
-                  </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 }
+
+

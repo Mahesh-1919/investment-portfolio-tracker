@@ -1,6 +1,5 @@
 import { StockHolding, Sector } from "@/types/portfolio";
 
-// Raw seed data from Excel
 const rawHoldings: Omit<
   StockHolding,
   "investment" | "portfolioPct" | "cmp" | "presentValue" | "gainLoss" | "gainLossPct"
@@ -22,7 +21,6 @@ const rawHoldings: Omit<
     pat: 69181,
     debtToEquity: 7,
     bookValue: 692.74,
-    isCoreHolding: true,
   },
   {
     id: 2,
@@ -41,8 +39,6 @@ const rawHoldings: Omit<
     pat: 15375,
     debtToEquity: 4,
     bookValue: 1252.78,
-    isCoreHolding: false,
-    exitFlag: "Exit",
   },
   {
     id: 3,
@@ -61,7 +57,6 @@ const rawHoldings: Omit<
     pat: 47368,
     debtToEquity: 6,
     bookValue: 365.79,
-    isCoreHolding: true,
   },
   {
     id: 4,
@@ -80,7 +75,6 @@ const rawHoldings: Omit<
     pat: 1861,
     debtToEquity: 6,
     bookValue: 18.23,
-    isCoreHolding: false,
   },
   {
     id: 5,
@@ -99,9 +93,7 @@ const rawHoldings: Omit<
     pat: null,
     debtToEquity: null,
     bookValue: null,
-    isCoreHolding: false,
   },
-
   {
     id: 6,
     particulars: "Affle India",
@@ -119,7 +111,6 @@ const rawHoldings: Omit<
     pat: 343,
     debtToEquity: 0,
     bookValue: 183,
-    isCoreHolding: true,
   },
   {
     id: 7,
@@ -138,7 +129,6 @@ const rawHoldings: Omit<
     pat: 4654,
     debtToEquity: 0,
     bookValue: 676,
-    isCoreHolding: false,
   },
   {
     id: 8,
@@ -157,8 +147,6 @@ const rawHoldings: Omit<
     pat: 728,
     debtToEquity: 0,
     bookValue: 78,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
   {
     id: 9,
@@ -177,8 +165,6 @@ const rawHoldings: Omit<
     pat: 647,
     debtToEquity: 0,
     bookValue: 79,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
   {
     id: 10,
@@ -197,7 +183,6 @@ const rawHoldings: Omit<
     pat: 44,
     debtToEquity: 0,
     bookValue: 55,
-    isCoreHolding: true,
   },
   {
     id: 11,
@@ -216,10 +201,7 @@ const rawHoldings: Omit<
     pat: 542,
     debtToEquity: 0,
     bookValue: 144,
-    isCoreHolding: false,
   },
-
-  // ── CONSUMER ────────────────────────────────────────────────────────
   {
     id: 12,
     particulars: "DMart",
@@ -237,8 +219,6 @@ const rawHoldings: Omit<
     pat: 2687,
     debtToEquity: 0,
     bookValue: 288,
-    isCoreHolding: false,
-    exitFlag: "Must Exit",
   },
   {
     id: 13,
@@ -257,7 +237,6 @@ const rawHoldings: Omit<
     pat: 47441,
     debtToEquity: 0,
     bookValue: 249,
-    isCoreHolding: false,
   },
   {
     id: 14,
@@ -276,10 +255,7 @@ const rawHoldings: Omit<
     pat: 1913,
     debtToEquity: 0,
     bookValue: 165,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
-
   {
     id: 15,
     particulars: "Tata Power",
@@ -297,7 +273,6 @@ const rawHoldings: Omit<
     pat: 3746,
     debtToEquity: 2,
     bookValue: 101,
-    isCoreHolding: false,
   },
   {
     id: 16,
@@ -316,8 +291,6 @@ const rawHoldings: Omit<
     pat: 230,
     debtToEquity: 1,
     bookValue: 73,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
   {
     id: 17,
@@ -336,8 +309,6 @@ const rawHoldings: Omit<
     pat: 960,
     debtToEquity: 0,
     bookValue: 3,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
   {
     id: 18,
@@ -356,11 +327,7 @@ const rawHoldings: Omit<
     pat: 98,
     debtToEquity: 5,
     bookValue: 87,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
-
-  // ── PIPE SECTOR ─────────────────────────────────────────────────────
   {
     id: 19,
     particulars: "Hariom Pipes",
@@ -378,8 +345,6 @@ const rawHoldings: Omit<
     pat: 60,
     debtToEquity: 1,
     bookValue: 164,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
   {
     id: 20,
@@ -398,7 +363,6 @@ const rawHoldings: Omit<
     pat: 526,
     debtToEquity: 0,
     bookValue: 119,
-    isCoreHolding: false,
   },
   {
     id: 21,
@@ -417,10 +381,7 @@ const rawHoldings: Omit<
     pat: 1795,
     debtToEquity: 0,
     bookValue: 546,
-    isCoreHolding: true,
   },
-
-  // ── OTHERS ──────────────────────────────────────────────────────────
   {
     id: 22,
     particulars: "Clean Science",
@@ -438,8 +399,6 @@ const rawHoldings: Omit<
     pat: 258,
     debtToEquity: 0,
     bookValue: 113,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
   {
     id: 23,
@@ -458,7 +417,6 @@ const rawHoldings: Omit<
     pat: 853,
     debtToEquity: 0,
     bookValue: 352,
-    isCoreHolding: false,
   },
   {
     id: 24,
@@ -477,7 +435,6 @@ const rawHoldings: Omit<
     pat: 386,
     debtToEquity: 0,
     bookValue: 606,
-    isCoreHolding: false,
   },
   {
     id: 25,
@@ -496,7 +453,6 @@ const rawHoldings: Omit<
     pat: 269,
     debtToEquity: 1,
     bookValue: 121,
-    isCoreHolding: false,
   },
   {
     id: 26,
@@ -515,8 +471,6 @@ const rawHoldings: Omit<
     pat: 2181,
     debtToEquity: 0,
     bookValue: 149,
-    isCoreHolding: false,
-    exitFlag: "Must exit",
   },
 ];
 

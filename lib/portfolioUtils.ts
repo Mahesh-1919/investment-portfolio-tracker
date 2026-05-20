@@ -25,6 +25,8 @@ export function mergeWithLivePrices(
       // Update PE and earnings if we got fresh data
       peRatio: live.peRatio ?? h.peRatio,
       latestEarnings: live.latestEarnings ?? h.latestEarnings,
+      sparkline: live.sparkline ?? h.sparkline,
+      news: live.news ?? h.news,
       lastUpdated: new Date().toISOString(),
     };
   });

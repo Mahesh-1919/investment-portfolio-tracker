@@ -1,6 +1,5 @@
 # Technical Document: Portfolio Dashboard
 
-**Candidate**: [Your Name]  
 **Assignment**: Dynamic Portfolio Dashboard — Octa Byte AI  
 **Stack**: Next.js 15 · TypeScript · Tailwind CSS · Node.js
 

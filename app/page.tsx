@@ -45,14 +45,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="mb-5 flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/15 text-xs text-amber-600">
-          <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-          <p>
-            CMP data sourced from Yahoo Finance via unofficial{" "}
-            <code className="font-mono bg-amber-500/10 px-1 rounded">yahoo-finance2</code>{" "}
-            library. Data may be 15–20 min delayed for NSE. P/E & EPS fall back to Excel values when unavailable. Auto-refreshes every 15 seconds.
-          </p>
-        </div>
 
         {loading && <LoadingSkeleton />}
 
@@ -71,7 +63,7 @@ export default function DashboardPage() {
             )}
             <PortfolioTable sectors={data.sectors} />
             <div className="flex items-center justify-between pt-2 text-xs text-slate-700 border-t border-slate-800/60">
-              <span>{data.meta.liveDataReceived}/{data.meta.totalSymbols} symbols with live data · {data.meta.errors} error(s)</span>
+              <span>{data.meta.liveDataReceived}/{data.meta.totalSymbols} symbols with live data</span>
               <span>Data as of {new Date(data.meta.timestamp).toLocaleString("en-IN")}</span>
             </div>
           </div>
