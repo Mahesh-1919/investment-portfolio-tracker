@@ -10,7 +10,6 @@ interface DashboardHeaderProps {
   countdown: number;
   liveCount: number;
   totalCount: number;
-  hasError: boolean;
 }
 
 export function DashboardHeader({
@@ -20,7 +19,6 @@ export function DashboardHeader({
   countdown,
   liveCount,
   totalCount,
-  hasError,
 }: DashboardHeaderProps) {
   const allLive = liveCount === totalCount && totalCount > 0;
   const someLive = liveCount > 0;
@@ -29,16 +27,11 @@ export function DashboardHeader({
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
       <div>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-violet-600 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">P</span>
-          </div>
+
           <h1 className="text-xl font-bold text-white tracking-tight">
             Portfolio Dashboard
           </h1>
         </div>
-        <p className="text-xs text-slate-500 mt-0.5 ml-9">
-          Priyanshu&apos;s Investment Portfolio · NSE / BSE
-        </p>
       </div>
 
       <div className="flex items-center gap-3 ml-9 sm:ml-0">

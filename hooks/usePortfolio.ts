@@ -37,7 +37,6 @@ export function usePortfolio(): UsePortfolioReturn {
   const [countdown, setCountdown] = useState(REFRESH_INTERVAL);
 
   const countdownRef = useRef(REFRESH_INTERVAL);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchData = useCallback(async (isManual = false) => {
@@ -73,26 +72,28 @@ export function usePortfolio(): UsePortfolioReturn {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchData();
   }, [fetchData]);
 
   useEffect(() => {
     countdownRef.current = REFRESH_INTERVAL;
 
-    countdownTimerRef.current = setInterval(() => {
+    const intervalId = setInterval(() => {
       countdownRef.current -= 1;
       setCountdown(countdownRef.current);
 
       if (countdownRef.current <= 0) {
         countdownRef.current = REFRESH_INTERVAL;
         setCountdown(REFRESH_INTERVAL);
-        fetchData();
+        void fetchData();
       }
     }, 1000);
+    
+    countdownTimerRef.current = intervalId;
 
     return () => {
-      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (intervalId) clearInterval(intervalId);
     };
   }, [fetchData]);
 
@@ -100,7 +101,7 @@ export function usePortfolio(): UsePortfolioReturn {
     // Reset countdown
     countdownRef.current = REFRESH_INTERVAL;
     setCountdown(REFRESH_INTERVAL);
-    fetchData(true);
+    void fetchData(true);
   }, [fetchData]);
 
   return { data, loading, error, lastUpdated, refresh, isRefreshing, countdown };

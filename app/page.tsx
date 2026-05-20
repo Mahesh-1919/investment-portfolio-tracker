@@ -7,7 +7,7 @@ import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
 import { SectorChart } from "@/components/portfolio/SectorChart";
 import { GainLossChart } from "@/components/portfolio/GainLossChart";
 import { LoadingSkeleton } from "@/components/portfolio/LoadingSkeleton";
-import { AlertCircle, Info } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 export default function DashboardPage() {
   const { data, loading, error, lastUpdated, refresh, isRefreshing, countdown } = usePortfolio();
@@ -32,7 +32,6 @@ export default function DashboardPage() {
           countdown={countdown}
           liveCount={liveCount}
           totalCount={totalCount}
-          hasError={!!error}
         />
 
         {error && (

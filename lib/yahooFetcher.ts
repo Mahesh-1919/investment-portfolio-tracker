@@ -36,11 +36,15 @@ async function fetchBatch(symbols: string[]): Promise<LivePriceResult[]> {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const quotes: any[] = await yf.quote(uncached);
+    const quotes = (await yf.quote(uncached)) as any[];
 
     // Fetch historical data and news for sparklines/headlines
     // We'll only do this for fresh results to save time
-    const quoteMap = new Map<string, any>(quotes.map((q: any) => [q.symbol, q]));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const quoteMap = new Map<string, any>(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      quotes.map((q: any) => [q.symbol, q])
+    );
 
     const freshResultsPromises = uncached.map(async (symbol) => {
       const q = quoteMap.get(symbol);
@@ -65,27 +69,31 @@ async function fetchBatch(symbols: string[]): Promise<LivePriceResult[]> {
           interval: "1d",
         });
         sparkline = chart.quotes
-          .map((q) => q.close)
+          .map((quote) => quote.close)
           .filter((v): v is number => v !== null);
         
         if (sparkline.length > 0) {
           console.log(`[YahooFetcher] Success: ${symbol} sparkline points: ${sparkline.length}`);
         }
-      } catch (e) {
-        console.warn(`[YahooFetcher] Failed sparkline for ${symbol}:`, (e as any).message);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.warn(`[YahooFetcher] Failed sparkline for ${symbol}:`, message);
       }
 
       // Fetch news (limit to first 3 items)
       let news: { title: string; link: string; publisher: string }[] | undefined;
       try {
         const search = await yf.search(symbol, { newsCount: 3 });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         news = search.news?.map((n: any) => ({
+
           title: n.title,
           link: n.link,
           publisher: n.publisher,
         }));
-      } catch (e) {
-        console.warn(`[YahooFetcher] Failed news for ${symbol}`);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.warn(`[YahooFetcher] Failed news for ${symbol}:`, message);
       }
 
       const result: LivePriceResult = {

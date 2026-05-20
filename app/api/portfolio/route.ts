@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { buildSeedPortfolio } from "@/lib/portfolioData";
 import { fetchLivePrices } from "@/lib/yahooFetcher";
 import { mergeWithLivePrices, groupBySector, computePortfolioStats } from "@/lib/portfolioUtils";
@@ -6,7 +6,7 @@ import { mergeWithLivePrices, groupBySector, computePortfolioStats } from "@/lib
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const seedHoldings = buildSeedPortfolio();
     const symbols = seedHoldings.map((h) => h.yahooSymbol);

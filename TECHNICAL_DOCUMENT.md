@@ -13,6 +13,9 @@ Before writing a single line of code, I mapped out the core sub-problems:
 |---------|------------|----------|
 | Yahoo Finance API (no official API) | High | `yahoo-finance2` npm lib (unofficial, server-side) |
 | Google Finance API (no API) | High | Yahoo Finance equivalents (trailingPE, EPS) |
+| 7-Day Sparklines | Medium | `yf.chart` (v2) for historical close prices |
+| Live News Feed | Medium | `yf.search` with hover-activated UI tooltips |
+| Portfolio Search/Filter | Low | Client-side fuzzy search via `useMemo` |
 | Rate limiting on unofficial APIs | Medium | In-memory cache + batched concurrency |
 | Real-time CMP updates | Medium | Client-side polling every 15s |
 | Sector grouping with collapsible rows | Medium | `@tanstack/react-table` + custom sector headers |
@@ -150,3 +153,15 @@ Key decisions:
 The most important non-obvious insight: **always read unofficial library source code before committing to it**. I verified `yahoo-finance2` before using it — it targets Yahoo's `query2.finance.yahoo.com` internal endpoint and has proper TypeScript types. Some alternatives (like `yahoo-finance` v1) are abandoned and broken.
 
 The second insight: **build for failure from day one**. The `null` data model + graceful UI degradation took 20% more upfront time but meant the dashboard always renders something useful, even when Yahoo is flaky.
+ fetch the last 7 days of closing prices in a single call.
+- **Frontend**: A custom lightweight component using Recharts `<LineChart />` with all axes hidden, color-coded by the stock's overall P&L status.
+
+### Live News Integration
+Context is key for investors. I added a hover-activated news feed:
+- **Data Source**: Uses `yf.search(symbol)` to retrieve the top 3 most relevant headlines and publishers.
+- **UI/UX**: Headlines are tucked away in a hover tooltip to keep the main table clean and focused on numbers.
+
+### Real-time Search
+With 26+ holdings, finding a specific stock quickly is essential:
+- **Implementation**: A client-side filter that matches against both company names and NSE/BSE symbols.
+- **Performance**: Integrated directly with `useMemo` and `@tanstack/react-table` to ensure sorting and sector grouping remain consistent while filtering.

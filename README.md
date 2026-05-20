@@ -50,13 +50,15 @@ Partial live data is surfaced with a count badge in the header.
 
 ## Features
 
-- Live CMP via Yahoo Finance (auto-refreshes every 15 seconds)
-- Sector grouping with collapsible rows + sector-level P&L summaries
-- Color-coded Gain/Loss: green = profit, red = loss
-- Sortable columns via @tanstack/react-table
-- Recharts: sector allocation bar chart + per-stock gain/loss chart
-- Core holding indicators (★) + exit flags from Excel data
-- Full loading skeleton, error banners, live status badge
+- **Live CMP**: Real-time prices via Yahoo Finance (auto-refreshes every 15 seconds)
+- **Interactive Search**: Quick filtering of stocks by name or symbol
+- **7-Day Sparklines**: Tiny trend graphs for each stock visualizing recent performance
+- **Live News Feed**: Hover-activated headlines for individual holdings
+- **Sector Intelligence**: Grouping with collapsible rows + sector-level P&L summaries
+- **Color-coded Analytics**: Visual Gain/Loss indicators (Green = Profit, Red = Loss)
+- **Professional Sorting**: Mult-column sortable table via @tanstack/react-table
+- **Visual Dashboards**: Sector allocation and per-stock performance charts via Recharts
+- **Resilient UI**: Full loading skeletons, error handling, and data fallback logic
 
 ## Tech Stack
 

@@ -3,7 +3,7 @@
 import { StockHolding } from "@/types/portfolio";
 import { formatCurrency, formatPct, formatNumber } from "@/lib/portfolioUtils";
 import clsx from "clsx";
-import { Star, Newspaper, ExternalLink } from "lucide-react";
+import { Newspaper, ExternalLink } from "lucide-react";
 import { Sparkline } from "./Sparkline";
 
 interface StockRowProps {
